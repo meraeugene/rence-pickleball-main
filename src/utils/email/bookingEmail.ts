@@ -1,0 +1,324 @@
+import nodemailer from "nodemailer";
+import { BOOKING_FEEDBACK_EMAIL } from "@/data/app/appConfig";
+import {
+  getAppUrl,
+  getBookingNotificationEmails,
+  requireEnv,
+} from "@/utils/env/appEnv";
+import { formatPeso } from "@/lib/pricing";
+import { formatManilaDateTime } from "@/lib/time";
+
+type BookingEmail = {
+  customerName: string;
+  endAt: string;
+  startAt: string;
+  to: string;
+  totalAmount: number;
+  courtName: string;
+  schedule?: Array<{
+    courtName: string;
+    endAt: string;
+    startAt: string;
+  }>;
+};
+
+type NewBookingAdminEmail = Omit<BookingEmail, "to"> & {
+  bookingGroupId: string;
+  customerContact: string;
+  customerEmail: string | null;
+  downpaymentAmount: number;
+  paymentMethod: string;
+};
+
+type BookingFeedbackEmail = {
+  bookingGroupId: string;
+  comment: string;
+  customerEmail: string | null;
+  customerName: string;
+  rating: number;
+};
+
+function getTransporter() {
+  const port = Number(process.env.SMTP_PORT || 465);
+
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    port,
+    secure: (process.env.SMTP_SECURE || "true") === "true",
+    auth: {
+      user: requireEnv("SMTP_USER"),
+      pass: requireEnv("SMTP_APP_PASSWORD"),
+    },
+  });
+}
+
+function getFromAddress() {
+  return process.env.SMTP_FROM || process.env.SMTP_USER || "UNO RALLY";
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function shell(title: string, body: string) {
+  return `
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width:100%;margin:0;background:#f4f4f5;font-family:Arial,sans-serif;color:#18181b">
+      <tr>
+        <td align="center" style="padding:18px 10px">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width:100%;max-width:680px;margin:0 auto;border:1px solid #e4e4e7;border-radius:18px;background:#ffffff;border-collapse:separate;border-spacing:0;overflow:hidden">
+            <tr>
+              <td style="padding:30px 24px">
+                <p style="margin:0 0 10px;color:#71717a;font-size:12px;letter-spacing:3px;text-transform:uppercase">UNO RALLY</p>
+                <h1 style="margin:0 0 18px;font-size:32px;line-height:1.16;color:#18181b">${title}</h1>
+                ${body}
+                <p style="margin:28px 0 0;color:#71717a;font-size:12px;line-height:1.6">This is an automated booking email from UNO RALLY.</p>
+                <p style="margin:8px 0 0;color:#71717a;font-size:12px;line-height:1.6">Developed by <a href="https://andrewvillalon.online" style="color:#18181b;font-weight:700;text-decoration:none">Andrew Villalon</a></p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  `;
+}
+
+function bookingRows(
+  booking: Pick<
+    BookingEmail,
+    "courtName" | "endAt" | "schedule" | "startAt" | "totalAmount"
+  >,
+) {
+  const scheduleRows = booking.schedule?.length
+    ? booking.schedule
+        .map((slot, index) =>
+          row(
+            `Slot ${index + 1}`,
+            `${slot.courtName}<br><span style="color:#71717a;font-size:13px;font-weight:500">${formatManilaDateTime(slot.startAt)} – ${formatManilaDateTime(slot.endAt)}</span>`,
+          ),
+        )
+        .join("")
+    : [
+        row("Court", booking.courtName),
+        row("Starts", formatManilaDateTime(booking.startAt)),
+        row("Ends", formatManilaDateTime(booking.endAt)),
+      ].join("");
+
+  return `
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width:100%;margin:22px 0;border:1px solid #e4e4e7;border-radius:14px;overflow:hidden;border-collapse:separate;border-spacing:0">
+      ${scheduleRows}
+      ${row("Total", formatPeso(booking.totalAmount))}
+    </table>
+  `;
+}
+
+function row(label: string, value: string) {
+  return `
+    <tr>
+      <td style="width:34%;padding:15px 16px;border-bottom:1px solid #e4e4e7;color:#71717a;font-size:14px;line-height:1.45;vertical-align:top;white-space:nowrap">${label}</td>
+      <td style="width:66%;padding:15px 16px;border-bottom:1px solid #e4e4e7;color:#18181b;font-size:15px;line-height:1.45;font-weight:700;text-align:right;vertical-align:top">${value}</td>
+    </tr>
+  `;
+}
+
+function formatCalendarDate(value: string) {
+  return new Date(value)
+    .toISOString()
+    .replace(/[-:]/g, "")
+    .replace(/\.\d{3}Z$/, "Z");
+}
+
+function escapeCalendarText(value: string) {
+  return value
+    .replace(/\\/g, "\\\\")
+    .replace(/\n/g, "\\n")
+    .replace(/,/g, "\\,")
+    .replace(/;/g, "\\;");
+}
+
+function buildCalendarAttachment(booking: BookingEmail) {
+  const slots = booking.schedule?.length
+    ? booking.schedule
+    : [
+        {
+          courtName: booking.courtName,
+          startAt: booking.startAt,
+          endAt: booking.endAt,
+        },
+      ];
+  const stamp = formatCalendarDate(new Date().toISOString());
+  const events = slots.flatMap((slot, index) => [
+    "BEGIN:VEVENT",
+    `UID:${formatCalendarDate(slot.startAt)}-${index}@unorally.local`,
+    `DTSTAMP:${stamp}`,
+    `DTSTART:${formatCalendarDate(slot.startAt)}`,
+    `DTEND:${formatCalendarDate(slot.endAt)}`,
+    `SUMMARY:${escapeCalendarText(`UNO RALLY booking - ${slot.courtName}`)}`,
+    `DESCRIPTION:${escapeCalendarText(`Confirmed booking for ${booking.customerName}`)}`,
+    "LOCATION:UNO RALLY",
+    "STATUS:CONFIRMED",
+    "TRANSP:OPAQUE",
+    "END:VEVENT",
+  ]);
+
+  return [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//UNO RALLY//Booking Calendar//EN",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    ...events,
+    "END:VCALENDAR",
+    "",
+  ].join("\r\n");
+}
+
+export async function sendAcceptanceEmail(booking: BookingEmail) {
+  const scheduleText = booking.schedule?.length
+    ? booking.schedule.map(
+        (slot, index) =>
+          `Slot ${index + 1}: ${slot.courtName}, ${formatManilaDateTime(slot.startAt)} - ${formatManilaDateTime(slot.endAt)}`,
+      )
+    : [
+        `Court: ${booking.courtName}`,
+        `Starts: ${formatManilaDateTime(booking.startAt)}`,
+        `Ends: ${formatManilaDateTime(booking.endAt)}`,
+      ];
+
+  await getTransporter().sendMail({
+    from: getFromAddress(),
+    to: booking.to,
+    subject: "Your UNO RALLY booking was accepted",
+    attachments: [
+      {
+        filename: "uno-rally-booking.ics",
+        content: buildCalendarAttachment(booking),
+        contentType: "text/calendar; charset=utf-8; method=PUBLISH",
+      },
+    ],
+    text: [
+      `Hi ${booking.customerName},`,
+      "",
+      "Your UNO RALLY booking has been accepted.",
+      ...scheduleText,
+      `Total: ${formatPeso(booking.totalAmount)}`,
+      "A calendar invitation is attached.",
+      "",
+      getAppUrl(),
+      "Developed by Andrew Villalon - https://andrewvillalon.online",
+    ].join("\n"),
+    html: shell(
+      "Booking accepted",
+      `
+        <p style="margin:0;color:#3f3f46;font-size:16px;line-height:1.7">Hi ${booking.customerName}, your booking has been accepted. Your slot is now reserved. A calendar invitation is attached.</p>
+        ${bookingRows(booking)}
+        <a href="${getAppUrl()}" style="display:inline-block;margin-top:4px;border-radius:12px;background:#18181b;color:#ffffff;padding:14px 20px;text-decoration:none;font-weight:800">View UNO RALLY</a>
+      `,
+    ),
+  });
+}
+
+export async function sendNewBookingAdminEmail(booking: NewBookingAdminEmail) {
+  const adminEmails = getBookingNotificationEmails();
+  if (!adminEmails.length) return;
+
+  const adminUrl = `${getAppUrl().replace(/\/$/, "")}/admin`;
+  const scheduleText = booking.schedule?.length
+    ? booking.schedule.map(
+        (slot, index) =>
+          `Slot ${index + 1}: ${slot.courtName}, ${formatManilaDateTime(slot.startAt)} - ${formatManilaDateTime(slot.endAt)}`,
+      )
+    : [
+        `Court: ${booking.courtName}`,
+        `Starts: ${formatManilaDateTime(booking.startAt)}`,
+        `Ends: ${formatManilaDateTime(booking.endAt)}`,
+      ];
+  const safeBooking = {
+    ...booking,
+    courtName: escapeHtml(booking.courtName),
+    schedule: booking.schedule?.map((slot) => ({
+      ...slot,
+      courtName: escapeHtml(slot.courtName),
+    })),
+  };
+
+  await getTransporter().sendMail({
+    from: getFromAddress(),
+    bcc: adminEmails,
+    subject: `New UNO RALLY booking from ${booking.customerName}`,
+    text: [
+      "A new booking is awaiting admin review.",
+      "",
+      `Customer: ${booking.customerName}`,
+      `Contact: ${booking.customerContact}`,
+      `Email: ${booking.customerEmail || "Not provided"}`,
+      ...scheduleText,
+      `Payment method: ${booking.paymentMethod}`,
+      `Amount paid: ${formatPeso(booking.downpaymentAmount)}`,
+      `Booking total: ${formatPeso(booking.totalAmount)}`,
+      `Booking group: ${booking.bookingGroupId}`,
+      "",
+      `Review booking: ${adminUrl}`,
+    ].join("\n"),
+    html: shell(
+      "New booking awaiting review",
+      `
+        <p style="margin:0;color:#3f3f46;font-size:16px;line-height:1.7"><strong>${escapeHtml(booking.customerName)}</strong> submitted a booking request.</p>
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width:100%;margin:22px 0;border:1px solid #e4e4e7;border-radius:14px;overflow:hidden;border-collapse:separate;border-spacing:0">
+          ${row("Customer", escapeHtml(booking.customerName))}
+          ${row("Contact", escapeHtml(booking.customerContact))}
+          ${row("Email", escapeHtml(booking.customerEmail || "Not provided"))}
+        </table>
+        ${bookingRows(safeBooking)}
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width:100%;margin:22px 0;border:1px solid #e4e4e7;border-radius:14px;overflow:hidden;border-collapse:separate;border-spacing:0">
+          ${row("Payment method", escapeHtml(booking.paymentMethod))}
+          ${row("Amount paid", formatPeso(booking.downpaymentAmount))}
+          ${row("Booking group", escapeHtml(booking.bookingGroupId))}
+        </table>
+        <a href="${escapeHtml(adminUrl)}" style="display:inline-block;margin-top:4px;border-radius:12px;background:#18181b;color:#ffffff;padding:14px 20px;text-decoration:none;font-weight:800">Review booking</a>
+      `,
+    ),
+  });
+}
+
+export async function sendBookingFeedbackEmail(
+  feedback: BookingFeedbackEmail,
+) {
+  const stars = `${"★".repeat(feedback.rating)}${"☆".repeat(5 - feedback.rating)}`;
+  const safeComment = escapeHtml(feedback.comment || "No comment provided.");
+
+  await getTransporter().sendMail({
+    from: getFromAddress(),
+    to: BOOKING_FEEDBACK_EMAIL,
+    subject: `UNO RALLY feedback: ${feedback.rating}/5 stars`,
+    text: [
+      "New post-booking feedback",
+      "",
+      `Rating: ${feedback.rating}/5 ${stars}`,
+      `Customer: ${feedback.customerName}`,
+      `Email: ${feedback.customerEmail || "Not provided"}`,
+      `Booking group: ${feedback.bookingGroupId}`,
+      "",
+      "Comment:",
+      feedback.comment || "No comment provided.",
+    ].join("\n"),
+    html: shell(
+      "New booking feedback",
+      `
+        <p style="margin:0;color:#3f3f46;font-size:16px;line-height:1.7">A customer shared feedback after submitting a booking.</p>
+        <p style="margin:20px 0 0;color:#18181b;font-size:28px;letter-spacing:4px" aria-label="${feedback.rating} out of 5 stars">${stars}</p>
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width:100%;margin:22px 0;border:1px solid #e4e4e7;border-radius:14px;overflow:hidden;border-collapse:separate;border-spacing:0">
+          ${row("Rating", `${feedback.rating}/5`)}
+          ${row("Customer", escapeHtml(feedback.customerName))}
+          ${row("Email", escapeHtml(feedback.customerEmail || "Not provided"))}
+          ${row("Booking group", escapeHtml(feedback.bookingGroupId))}
+        </table>
+        <div style="border-radius:14px;background:#f4f4f5;padding:18px;color:#3f3f46;font-size:15px;line-height:1.7;white-space:pre-wrap">${safeComment}</div>
+      `,
+    ),
+  });
+}
