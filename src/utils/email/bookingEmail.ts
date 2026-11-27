@@ -77,7 +77,7 @@ function shell(title: string, body: string) {
                 <h1 style="margin:0 0 18px;font-size:32px;line-height:1.16;color:#18181b">${title}</h1>
                 ${body}
                 <p style="margin:28px 0 0;color:#71717a;font-size:12px;line-height:1.6">This is an automated booking email from UNO RALLY.</p>
-                <p style="margin:8px 0 0;color:#71717a;font-size:12px;line-height:1.6">Developed by <a href="https://andrewvillalon.online" style="color:#18181b;font-weight:700;text-decoration:none">Dev_AV</a></p>
+                <p style="margin:8px 0 0;color:#71717a;font-size:12px;line-height:1.6">Developed by <span style="color:#18181b;font-weight:700">Dev_AV</span></p>
               </td>
             </tr>
           </table>
