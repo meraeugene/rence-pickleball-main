@@ -1,7 +1,7 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
 
+import Image from "next/image";
 import type { Ref } from "react";
 import { DeveloperCredit } from "@/components/brand/DeveloperCredit";
 
@@ -30,12 +30,14 @@ export function SplashFrame({
       ].join(" ")}
     >
       <div className="splash-content grid w-full max-w-5xl justify-items-center gap-7">
-        <img
+        <Image
           alt="UNO RALLY"
           className="splash-logo h-auto w-40 sm:w-48"
-          width={1228}
           height={773}
+          priority
+          sizes="(min-width: 640px) 192px, 160px"
           src="/uno-rally-logo-new.png"
+          width={1228}
         />
         <div className="w-full max-w-[14rem]">
           <div className="h-[3px] overflow-hidden rounded-full bg-white/12">

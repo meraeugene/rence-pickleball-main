@@ -5,26 +5,39 @@ import { getAppUrl } from "@/utils/env/appEnv";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"], preload: false });
 const rallyDisplay = Orbitron({ variable: "--font-display", subsets: ["latin"], weight: ["500", "600", "700", "800", "900"] });
+
+const SITE_TITLE = "UNO RALLY | Indoor Pickleball Court in Cagayan de Oro";
+const SITE_DESCRIPTION =
+  "Book indoor pickleball court time at UNO RALLY in Cagayan de Oro. Open daily, reserve online in minutes, and play with the UNO RALLY community.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(getAppUrl()),
-  title: { default: "UNO RALLY | Your Court. Your Crew. Your Rally.", template: "%s | UNO RALLY" },
-  description: "Good games. Great company. One more rally. Meet UNO RALLY, find your court time, and make room for your next favorite sport.",
+  title: { default: SITE_TITLE, template: "%s | UNO RALLY" },
+  description: SITE_DESCRIPTION,
   applicationName: "UNO RALLY",
   alternates: { canonical: "/" },
-  keywords: ["UNO RALLY", "pickleball", "pickleball court booking", "court reservations"],
+  keywords: [
+    "UNO RALLY",
+    "pickleball Cagayan de Oro",
+    "pickleball court CDO",
+    "indoor pickleball court",
+    "pickleball court booking",
+    "pickleball Philippines",
+  ],
+  category: "sports",
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large" } },
   icons: { icon: "/uno-rally-icon-v2.png", shortcut: "/uno-rally-icon-v2.png", apple: "/apple-touch-icon-v2.png" },
   manifest: "/manifest.webmanifest",
   openGraph: {
-    title: "UNO RALLY | Your Court. Your Crew. Your Rally.",
-    description: "Good games. Great company. One more rally. Find your next game at UNO RALLY.",
+    title: SITE_TITLE,
+    description: "Your Court. Your Crew. Your Rally. Book indoor pickleball court time in Cagayan de Oro.",
     url: "/", siteName: "UNO RALLY",
-    images: [{ url: "/uno-rally-social-v2.png", width: 1200, height: 630, alt: "UNO RALLY pickleball club" }],
+    images: [{ url: "/uno-rally-social-v2.png", width: 1200, height: 630, alt: "UNO RALLY indoor pickleball, Cagayan de Oro" }],
     locale: "en_PH", type: "website",
   },
-  twitter: { card: "summary_large_image", title: "UNO RALLY | Your Court. Your Crew. Your Rally.", description: "Good games. Great company. One more rally.", images: ["/uno-rally-social-v2.png"] },
+  twitter: { card: "summary_large_image", title: SITE_TITLE, description: "Book indoor pickleball court time in Cagayan de Oro.", images: ["/uno-rally-social-v2.png"] },
 };
 export const viewport: Viewport = { themeColor: "#000000", colorScheme: "dark" };
 

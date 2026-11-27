@@ -14,7 +14,7 @@ export function HeroSection({ businessRules, preview = false }: { businessRules:
             <p className="mb-6 inline-flex items-center gap-3 rounded-full border border-white/15 bg-black/30 px-4 py-2 text-[0.55rem] font-bold uppercase tracking-[0.18em] text-zinc-300 sm:text-[0.6rem]">
               <MapPin aria-hidden="true" className="h-3 w-3 shrink-0 text-white" /> Cagayan de Oro Pickleball
             </p>
-            <h1 className="font-display hero-shine-text text-5xl font-black uppercase leading-[1.05] tracking-tight sm:text-7xl xl:text-8xl">One more<br />rally.</h1>
+            <h1 className="font-display hero-shine-text text-5xl font-black uppercase leading-[1.05] tracking-tight sm:text-7xl xl:text-8xl">One more<br />rally.<span className="sr-only"> UNO RALLY, indoor pickleball court in Cagayan de Oro</span></h1>
             <p className="mt-7 max-w-md text-sm leading-8 text-zinc-300 sm:text-base">Great courts, good company. Book your spot and play.</p>
             <div className="mt-8 flex flex-wrap items-center gap-6">
               <a className="premium-button h-14 rounded-xl px-6 text-xs font-black uppercase tracking-widest" href="#schedule">Book a court <ArrowRight size={17} /></a>

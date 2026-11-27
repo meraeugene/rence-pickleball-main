@@ -1,52 +1,15 @@
 "use client";
 
-import type { User } from "@supabase/supabase-js";
-import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { createClient } from "@/utils/supabase/browser";
 
-export function useAuthButton(serverSignedIn: boolean) {
-  const router = useRouter();
+export function useAuthButton() {
   const supabase = useMemo(() => createClient(), []);
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"bookings" | "notifications">("bookings");
   const [pendingAction, setPendingAction] = useState<
     "signin" | "signout" | null
   >(null);
-  // undefined = browser session not read yet, so fall back to the server value.
-  // Reading it here lets the header switch the moment Supabase signs in/out,
-  // instead of waiting for the server to re-render the page.
-  const [clientUser, setClientUser] = useState<User | null | undefined>(
-    undefined,
-  );
-
-  useEffect(() => {
-    const syncSession = (user: User | null) => {
-      setClientUser(user);
-      if (Boolean(user) !== serverSignedIn) {
-        router.refresh();
-      }
-    };
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      syncSession(session?.user ?? null);
-    });
-
-    const syncRestoredPage = () => {
-      void supabase.auth.getSession().then(({ data }) => {
-        syncSession(data.session?.user ?? null);
-      });
-    };
-
-    window.addEventListener("pageshow", syncRestoredPage);
-
-    return () => {
-      subscription.unsubscribe();
-      window.removeEventListener("pageshow", syncRestoredPage);
-    };
-  }, [router, serverSignedIn, supabase]);
 
   async function signIn() {
     setPendingAction("signin");
@@ -63,11 +26,12 @@ export function useAuthButton(serverSignedIn: boolean) {
     return null;
   }
 
+  // The header updates from the shared session listener the moment these
+  // resolve; no page reload or server round-trip is needed.
   async function signInAsGuest() {
     const { error } = await supabase.auth.signInAnonymously();
     if (error) return error;
     setOpen(false);
-    router.refresh();
     return null;
   }
 
@@ -79,12 +43,10 @@ export function useAuthButton(serverSignedIn: boolean) {
       return "Unable to end this session. Please try again.";
     }
     setOpen(false);
-    router.refresh();
     return null;
   }
 
   return {
-    clientUser,
     open,
     pendingAction,
     setOpen,

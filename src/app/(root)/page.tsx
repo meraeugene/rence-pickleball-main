@@ -1,14 +1,4 @@
-import type { User } from "@supabase/supabase-js";
-import {
-  getAdminEmails,
-  hasSupabaseConfig,
-  hasBookingConfig,
-} from "@/utils/env/appEnv";
-import { createClient } from "@/utils/supabase/server";
-import {
-  getAcceptedBookings,
-  getUserBookingHistory,
-} from "@/utils/booking/getAcceptedBookings";
+import { hasBookingConfig, hasSupabaseConfig } from "@/utils/env/appEnv";
 import {
   DEFAULT_BOOKING_SETTINGS,
   getBusinessRules,
@@ -16,39 +6,27 @@ import {
 import { DEFAULT_PRICING_BANDS } from "@/lib/pricing";
 import { getPublishedAnnouncements } from "@/utils/announcements/getAnnouncements";
 import { ACTIVE_COURT_IDS, COURTS } from "@/data/app/appConfig";
-import { getUserAvatarUrl } from "@/utils/users/getUserAvatarUrl";
-import { getUserDisplayName } from "@/utils/users/getUserDisplayName";
 import { todayInManila } from "@/lib/time";
 import { AmenitiesSection } from "@/components/home/AmenitiesSection";
 import { BookingWidget } from "@/components/booking-widget/BookingWidget";
 import { CustomerBookingsSection } from "@/components/customer-bookings/CustomerBookingsSection";
 import { FindUsSection } from "@/components/home/FindUsSection";
 import { HeroSection } from "@/components/home/HeroSection";
+import { LocalBusinessJsonLd } from "@/components/seo/LocalBusinessJsonLd";
 import { SiteHeader } from "@/components/home/SiteHeader";
 import { TournamentSection } from "@/components/home/TournamentSection";
 import FooterSection from "@/components/home/FooterSection";
 import { SplashScreen } from "@/components/system/SplashScreen";
 
-export const dynamic = "force-dynamic";
+// Served as a cached page from Vercel's edge and refreshed in the background
+// at most once a minute (admin changes to announcements refresh it at once).
+// Anything about the signed-in visitor loads in the browser afterwards.
+export const revalidate = 60;
 export const preferredRegion = "sin1";
 
 export default async function Home() {
-  const servicesReady = hasSupabaseConfig();
   const bookingsReady = hasBookingConfig();
-  let user: User | null = null;
-  if (servicesReady) {
-    const supabase = await createClient();
-    const result = await supabase.auth.getUser();
-    user = result.data.user;
-  }
-  const initialName = getUserDisplayName(user);
-  const avatarUrl = getUserAvatarUrl(user) || "";
-  const isAdmin = Boolean(
-    user?.email && getAdminEmails().includes(user.email.toLowerCase()),
-  );
-  const [bookings, bookingHistory, businessRules, announcements] = await Promise.all([
-    user && bookingsReady ? getAcceptedBookings(user.id) : [],
-    user && bookingsReady ? getUserBookingHistory(user.id) : [],
+  const [businessRules, announcements] = await Promise.all([
     bookingsReady
       ? getBusinessRules()
       : {
@@ -67,35 +45,22 @@ export default async function Home() {
       >
         Skip to content
       </a>
+      <LocalBusinessJsonLd settings={businessRules.settings} />
       <SplashScreen />
-      <SiteHeader
-        avatarUrl={avatarUrl}
-        bookings={bookings}
-        email={user?.email}
-        fullName={initialName}
-        isAdmin={isAdmin}
-        isGuest={Boolean(user?.is_anonymous)}
-        signedIn={Boolean(user)}
-        servicesReady={servicesReady}
-      />
+      <SiteHeader servicesReady={hasSupabaseConfig()} />
       <main
         id="main-content"
         className="relative min-h-screen overflow-hidden bg-black text-white"
       >
         <div className="pointer-events-none fixed left-1/2 top-0 hidden h-[34rem] w-[34rem] -translate-x-1/2 rounded-full bg-white/10 blur-[130px] sm:block" />
         <HeroSection businessRules={businessRules} preview={!bookingsReady} />
-        <CustomerBookingsSection
-          bookings={bookingHistory}
-          signedIn={Boolean(user)}
-        />
+        <CustomerBookingsSection bookings={[]} signedIn={false} />
         <AmenitiesSection />
         <BookingWidget
           initialDate={todayInManila()}
-          initialEmail={user?.email || ""}
-          initialName={initialName}
           courts={businessRules.courts}
           pricingBands={businessRules.pricingBands}
-          signedIn={Boolean(user)}
+          signedIn={false}
           servicesReady={bookingsReady}
         />
         <TournamentSection announcements={announcements} />

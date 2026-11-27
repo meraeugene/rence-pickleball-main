@@ -4,6 +4,7 @@ import type React from "react";
 import { useMemo, useState, useTransition } from "react";
 import { CalendarDays, Clock3, Loader2, ReceiptText, XCircle } from "lucide-react";
 import { useSWRConfig } from "swr";
+import { useClientSession } from "@/hooks/useClientSession";
 import { cancelUserBooking } from "@/actions/bookings/cancelUserBooking";
 import { formatPeso } from "@/lib/pricing";
 import type { UserBooking } from "@/types/userBooking";
@@ -33,8 +34,10 @@ type FilterValue = (typeof FILTERS)[number]["value"];
 
 export function CustomerBookingsSection({
   bookings,
-  signedIn,
+  signedIn: serverSignedIn,
 }: CustomerBookingsSectionProps) {
+  const session = useClientSession();
+  const signedIn = serverSignedIn || session.signedIn;
   const { mutate } = useSWRConfig();
   const [filter, setFilter] = useState<FilterValue>("ALL");
   const [cancelError, setCancelError] = useState<string | null>(null);

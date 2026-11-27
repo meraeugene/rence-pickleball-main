@@ -33,6 +33,8 @@ import { deletePaymentProofUpload } from "@/utils/payments/deletePaymentProofUpl
 import { uploadPaymentProof } from "@/utils/payments/uploadPaymentProof";
 import type { CourtSlot } from "@/lib/time";
 import { createClient } from "@/utils/supabase/browser";
+import { useClientSession } from "@/hooks/useClientSession";
+import { getUserDisplayName } from "@/utils/users/getUserDisplayName";
 
 export function useBookingWidget({
   courts,
@@ -50,6 +52,18 @@ export function useBookingWidget({
     useState<AccessChoiceAction>(null);
   const [accessError, setAccessError] = useState<string | null>(null);
   const [hasBookingSession, setHasBookingSession] = useState(signedIn);
+  // The page is cached, so the signed-in user is known only in the browser.
+  // Follow it here, and pre-fill name/email for Google users if still empty.
+  const session = useClientSession();
+  const sessionUser = session.user;
+  const [prefilledFor, setPrefilledFor] = useState<string | null>(null);
+  const sessionKey = session.ready ? sessionUser?.id ?? "signed-out" : "loading";
+  const [seenSessionKey, setSeenSessionKey] = useState(sessionKey);
+  if (sessionKey !== seenSessionKey) {
+    // Only react when the session actually changes (login, logout, page load).
+    setSeenSessionKey(sessionKey);
+    if (session.ready) setHasBookingSession(signedIn || Boolean(sessionUser));
+  }
   const [step, setStep] = useState<BookingStep>("schedule");
   const [date, setDate] = useState(initialDate);
   const [calendarMonth, setCalendarMonth] = useState(initialDate.slice(0, 7));
@@ -57,6 +71,11 @@ export function useBookingWidget({
   const [customerName, setCustomerName] = useState(initialName);
   const [customerContact, setCustomerContact] = useState("");
   const [customerEmail, setCustomerEmail] = useState(initialEmail);
+  if (sessionUser && !sessionUser.is_anonymous && prefilledFor !== sessionUser.id) {
+    setPrefilledFor(sessionUser.id);
+    if (!customerName) setCustomerName(getUserDisplayName(sessionUser));
+    if (!customerEmail && sessionUser.email) setCustomerEmail(sessionUser.email);
+  }
   const [paymentMethod] = useState<PaymentMethod>("GOTYME");
   const [paymentAmountMode, setPaymentAmountMode] =
     useState<PaymentAmountMode>("HALF");
@@ -182,7 +201,6 @@ export function useBookingWidget({
       setHasBookingSession(true);
       setAccessModalOpen(false);
       setOpen(true);
-      router.refresh();
     } catch {
       setAccessError("Unable to connect. Please check your connection and try again.");
     } finally {

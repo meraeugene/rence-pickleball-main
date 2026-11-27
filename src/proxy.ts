@@ -60,7 +60,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-  ],
+  // Only routes that read the session on the server. The homepage is a cached
+  // static page and handles sign-in in the browser, so it skips this step.
+  matcher: ["/admin/:path*", "/api/:path*", "/auth/:path*"],
 };

@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { useAcceptedBookings } from "@/hooks/useAcceptedBookings";
 import { useAuthButton } from "@/hooks/useAuthButton";
+import { useClientSession } from "@/hooks/useClientSession";
 import type { AdminBookingNotification } from "@/types/admin/adminBooking";
 import type { UserBooking } from "@/types/userBooking";
 import type { AccessChoiceAction } from "@/types/auth";
@@ -37,32 +38,18 @@ type AuthButtonProps = {
   signedIn?: boolean;
 };
 
-export function AuthButton({
-  avatarUrl: serverAvatarUrl,
-  bookings = [],
-  email: serverEmail,
-  fullName: serverFullName,
-  isAdmin: serverIsAdmin = false,
-  isGuest: serverIsGuest = false,
-  signedIn: serverSignedIn = false,
-}: AuthButtonProps) {
-  const auth = useAuthButton(serverSignedIn);
-  // Prefer the live browser session so the header updates instantly on login/logout.
-  const clientUser = auth.clientUser;
-  const sessionKnown = clientUser !== undefined;
-  const sameUserAsServer = sessionKnown && serverSignedIn && Boolean(clientUser) &&
-    (clientUser?.email ?? null) === (serverEmail ?? null);
-  const signedIn = sessionKnown ? Boolean(clientUser) : serverSignedIn;
-  const email = sessionKnown ? clientUser?.email ?? null : serverEmail;
-  const fullName = sessionKnown && !sameUserAsServer
-    ? getUserDisplayName(clientUser ?? null)
-    : serverFullName;
-  const avatarUrl = sessionKnown && !sameUserAsServer
-    ? getUserAvatarUrl(clientUser ?? null)
-    : serverAvatarUrl;
-  const isGuest = sessionKnown ? Boolean(clientUser?.is_anonymous) : serverIsGuest;
-  // Admin rights always come from the server check, never from the browser.
-  const isAdmin = signedIn && serverIsAdmin && (!sessionKnown || sameUserAsServer);
+export function AuthButton({ bookings = [] }: AuthButtonProps) {
+  const auth = useAuthButton();
+  // Signed-in state comes from the browser session, so the header switches the
+  // moment someone logs in or out, and the page itself can stay cached.
+  const session = useClientSession();
+  const user = session.user;
+  const signedIn = session.signedIn;
+  const email = user?.email ?? null;
+  const fullName = getUserDisplayName(user);
+  const avatarUrl = getUserAvatarUrl(user);
+  const isGuest = session.isGuest;
+  const isAdmin = session.isAdmin;
   const [loginChoiceOpen, setLoginChoiceOpen] = useState(false);
   const [loginAction, setLoginAction] = useState<AccessChoiceAction>(null);
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -130,6 +117,10 @@ export function AuthButton({
       setLoginAction(null);
       setLoginError(error);
     }
+  }
+
+  if (!session.ready) {
+    return <span aria-hidden className="block h-10 w-24 rounded-xl border border-white/10 bg-white/[0.04] sm:w-28" />;
   }
 
   if (!signedIn) {
