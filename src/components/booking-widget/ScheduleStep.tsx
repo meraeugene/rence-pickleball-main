@@ -358,7 +358,7 @@ export function ScheduleStep({
               </div>
               {courts.map((court) => (
                 <div
-                  className="flex min-h-20 min-w-0 flex-col justify-center border-b border-r border-white/10 bg-zinc-900 px-3 last:border-r-0 lg:sticky lg:top-0 lg:z-20 lg:min-h-16"
+                  className="flex min-h-20 min-w-0 flex-col items-center justify-center border-b border-r border-white/10 bg-zinc-900 px-3 text-center last:border-r-0 lg:sticky lg:top-0 lg:z-20 lg:min-h-16"
                   key={court.id}
                 >
                   <span className="font-display text-sm font-black uppercase tracking-[0.1em] text-white">

@@ -753,7 +753,9 @@ input:disabled {
 /* Lock both scroll containers before hydration and until the overlay unmounts.
    Booking dialogs can update body inline styles without releasing this lock. */
 html:not(.splash-seen):has(.splash-screen),
-html:not(.splash-seen) body:has(.splash-screen) {
+html:not(.splash-seen) body:has(.splash-screen),
+html:has(.splash-screen:not(.splash-screen-auto-exit)),
+body:has(.splash-screen:not(.splash-screen-auto-exit)) {
   overflow: hidden !important;
   overscroll-behavior: none;
   touch-action: none;
@@ -805,8 +807,9 @@ html:not(.splash-seen) body:has(.splash-screen) {
   animation: splash-loading var(--splash-hold) cubic-bezier(0.45, 0, 0.2, 1) both;
 }
 
-/* Already shown in this tab: skip it (e.g. after login or a refresh). */
-.splash-seen .splash-screen {
+/* Homepage intro already shown in this tab: skip it (e.g. after login or a
+   refresh). Only the auto-exiting intro; loading screens (admin) still show. */
+.splash-seen .splash-screen-auto-exit {
   visibility: hidden;
   animation: none !important;
 }
@@ -823,6 +826,21 @@ html:not(.splash-seen) body:has(.splash-screen) {
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+.splash-screen:not(.splash-screen-auto-exit) .splash-loading-line {
+  width: 40%;
+  transform: none;
+  animation: splash-loading-sweep 1.1s ease-in-out infinite;
+}
+
+@keyframes splash-loading-sweep {
+  from {
+    margin-left: -40%;
+  }
+  to {
+    margin-left: 100%;
   }
 }
 
