@@ -1,1 +1,1 @@
-export type AdminView = "queue" | "expenses" | "schedule" | "backup" | "reset";
+export type AdminView = "queue" | "announcements" | "expenses" | "schedule" | "backup" | "reset";

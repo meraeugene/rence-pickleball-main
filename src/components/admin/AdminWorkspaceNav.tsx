@@ -1,12 +1,13 @@
 "use client";
 
-import { CalendarDays, DatabaseBackup, LayoutDashboard, Trash2, Wallet } from "lucide-react";
+import { CalendarDays, DatabaseBackup, LayoutDashboard, Megaphone, Trash2, Wallet } from "lucide-react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import type { AdminView } from "@/types/admin/adminWorkspace";
 
 const items = [
   { value: "queue", label: "Manage bookings", icon: LayoutDashboard },
   { value: "schedule", label: "Court schedule", icon: CalendarDays },
+  { value: "announcements", label: "Announcements", icon: Megaphone },
   { value: "expenses", label: "Expenses & profit", icon: Wallet },
   { value: "backup", label: "Backup & restore", icon: DatabaseBackup },
   { value: "reset", label: "Reset data", icon: Trash2 },

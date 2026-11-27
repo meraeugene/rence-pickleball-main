@@ -17,7 +17,8 @@ import { useAuthButton } from "@/hooks/useAuthButton";
 import type { AdminBookingNotification } from "@/types/admin/adminBooking";
 import type { UserBooking } from "@/types/userBooking";
 import type { AccessChoiceAction } from "@/types/auth";
-import { createClient } from "@/utils/supabase/browser";
+import { getUserAvatarUrl } from "@/utils/users/getUserAvatarUrl";
+import { getUserDisplayName } from "@/utils/users/getUserDisplayName";
 import { AccessChoiceModal } from "./AccessChoiceModal";
 import { AdminNotificationMenuItem } from "./AdminNotificationMenuItem";
 import { BookingMenuItem } from "./BookingMenuItem";
@@ -37,15 +38,31 @@ type AuthButtonProps = {
 };
 
 export function AuthButton({
-  avatarUrl,
+  avatarUrl: serverAvatarUrl,
   bookings = [],
-  email,
-  fullName,
-  isAdmin = false,
-  isGuest = false,
-  signedIn = false,
+  email: serverEmail,
+  fullName: serverFullName,
+  isAdmin: serverIsAdmin = false,
+  isGuest: serverIsGuest = false,
+  signedIn: serverSignedIn = false,
 }: AuthButtonProps) {
-  const auth = useAuthButton(signedIn);
+  const auth = useAuthButton(serverSignedIn);
+  // Prefer the live browser session so the header updates instantly on login/logout.
+  const clientUser = auth.clientUser;
+  const sessionKnown = clientUser !== undefined;
+  const sameUserAsServer = sessionKnown && serverSignedIn && Boolean(clientUser) &&
+    (clientUser?.email ?? null) === (serverEmail ?? null);
+  const signedIn = sessionKnown ? Boolean(clientUser) : serverSignedIn;
+  const email = sessionKnown ? clientUser?.email ?? null : serverEmail;
+  const fullName = sessionKnown && !sameUserAsServer
+    ? getUserDisplayName(clientUser ?? null)
+    : serverFullName;
+  const avatarUrl = sessionKnown && !sameUserAsServer
+    ? getUserAvatarUrl(clientUser ?? null)
+    : serverAvatarUrl;
+  const isGuest = sessionKnown ? Boolean(clientUser?.is_anonymous) : serverIsGuest;
+  // Admin rights always come from the server check, never from the browser.
+  const isAdmin = signedIn && serverIsAdmin && (!sessionKnown || sameUserAsServer);
   const [loginChoiceOpen, setLoginChoiceOpen] = useState(false);
   const [loginAction, setLoginAction] = useState<AccessChoiceAction>(null);
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -92,10 +109,9 @@ export function AuthButton({
   async function continueAsGuest() {
     setLoginError(null);
     setLoginAction("guest");
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInAnonymously();
+    const error = await auth.signInAsGuest();
+    setLoginAction(null);
     if (error) {
-      setLoginAction(null);
       setLoginError(
         error.message.toLowerCase().includes("anonymous")
           ? "Guest access is not enabled yet."
@@ -103,7 +119,7 @@ export function AuthButton({
       );
       return;
     }
-    window.location.reload();
+    setLoginChoiceOpen(false);
   }
 
   async function continueWithGoogle() {
@@ -154,7 +170,11 @@ export function AuthButton({
   async function endGuestSession() {
     setEndGuestSessionError(null);
     const error = await auth.signOut();
-    if (error) setEndGuestSessionError(error);
+    if (error) {
+      setEndGuestSessionError(error);
+      return;
+    }
+    setEndGuestSessionOpen(false);
   }
 
   return (

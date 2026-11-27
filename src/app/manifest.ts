@@ -7,7 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/", scope: "/", display: "standalone",
     background_color: "#000000", theme_color: "#000000",
     icons: [
-      { src: "/uno-rally-icon.png", sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: "/uno-rally-icon-v2.png", sizes: "512x512", type: "image/png", purpose: "any" },
     ],
   };
 }

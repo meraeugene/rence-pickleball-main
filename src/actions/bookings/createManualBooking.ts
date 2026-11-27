@@ -98,6 +98,11 @@ export async function createManualBooking(formData: FormData) {
     return { error: "Please choose a time during operating hours." };
   }
 
+  const bookableCourtIds = new Set(rules.courts.map((court) => court.id));
+  if (normalizedSelections.some((selection) => !bookableCourtIds.has(selection.courtId!))) {
+    return { error: "Select a valid court before booking." };
+  }
+
   if (isBeforeBookingOpeningDate(parsed.data.date)) {
     return { error: "Bookings open on July 26, 2026." };
   }

@@ -14,7 +14,8 @@ import {
   getBusinessRules,
 } from "@/utils/booking/getBusinessRules";
 import { DEFAULT_PRICING_BANDS } from "@/lib/pricing";
-import { COURTS } from "@/data/app/appConfig";
+import { getPublishedAnnouncements } from "@/utils/announcements/getAnnouncements";
+import { ACTIVE_COURT_IDS, COURTS } from "@/data/app/appConfig";
 import { getUserAvatarUrl } from "@/utils/users/getUserAvatarUrl";
 import { getUserDisplayName } from "@/utils/users/getUserDisplayName";
 import { todayInManila } from "@/lib/time";
@@ -45,16 +46,17 @@ export default async function Home() {
   const isAdmin = Boolean(
     user?.email && getAdminEmails().includes(user.email.toLowerCase()),
   );
-  const [bookings, bookingHistory, businessRules] = await Promise.all([
+  const [bookings, bookingHistory, businessRules, announcements] = await Promise.all([
     user && bookingsReady ? getAcceptedBookings(user.id) : [],
     user && bookingsReady ? getUserBookingHistory(user.id) : [],
     bookingsReady
       ? getBusinessRules()
       : {
           settings: DEFAULT_BOOKING_SETTINGS,
-          courts: COURTS.map((court) => ({ ...court, description: "Indoor" })),
+          courts: COURTS.filter((court) => ACTIVE_COURT_IDS.includes(court.id)).map((court) => ({ ...court, description: "Indoor" })),
           pricingBands: DEFAULT_PRICING_BANDS,
         },
+    bookingsReady ? getPublishedAnnouncements() : [],
   ]);
 
   return (
@@ -96,7 +98,7 @@ export default async function Home() {
           signedIn={Boolean(user)}
           servicesReady={bookingsReady}
         />
-        <TournamentSection />
+        <TournamentSection announcements={announcements} />
         <FindUsSection
           settings={businessRules.settings}
           preview={!bookingsReady}

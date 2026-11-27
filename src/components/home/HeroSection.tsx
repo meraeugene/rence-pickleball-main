@@ -23,7 +23,7 @@ export function HeroSection({ businessRules, preview = false }: { businessRules:
           </div>
         </div>
         <div className="modern-hero-stats mt-12 grid gap-4 border-t border-white/15 pt-6 sm:grid-cols-3">
-          <div className="flex items-center gap-4"><span className="icon-chip h-11 w-11 rounded-xl"><ShieldCheck size={19} /></span><div><p className="font-display text-lg font-bold">{preview ? "Court booking" : `${businessRules.courts.length} Pro Courts`}</p><p className="mt-1 text-[0.65rem] text-zinc-500">Indoor and ready</p></div></div>
+          <div className="flex items-center gap-4"><span className="icon-chip h-11 w-11 rounded-xl"><ShieldCheck size={19} /></span><div><p className="font-display text-lg font-bold">{preview ? "Court booking" : `${businessRules.courts.length} PRO COURT${businessRules.courts.length === 1 ? "" : "S"}`}</p><p className="mt-1 text-[0.65rem] text-zinc-500">Indoor and ready</p></div></div>
           <div className="flex items-center gap-4"><span className="icon-chip h-11 w-11 rounded-xl"><Clock3 size={19} /></span><div><p className="font-display text-sm font-bold">{preview ? "Schedule available soon" : formatHourRange(businessRules.settings.openHour, businessRules.settings.closeHour)}</p><p className="mt-1 text-[0.65rem] text-zinc-500">Open daily</p></div></div>
           <div className="flex items-center gap-4"><span className="icon-chip h-11 w-11 rounded-xl"><CalendarDays size={19} /></span><div><p className="font-display text-sm font-bold">Your time. Your court.</p><p className="mt-1 text-[0.65rem] text-zinc-500">Book online in minutes</p></div></div>
         </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import type { User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/utils/supabase/browser";
@@ -12,10 +13,17 @@ export function useAuthButton(serverSignedIn: boolean) {
   const [pendingAction, setPendingAction] = useState<
     "signin" | "signout" | null
   >(null);
+  // undefined = browser session not read yet, so fall back to the server value.
+  // Reading it here lets the header switch the moment Supabase signs in/out,
+  // instead of waiting for the server to re-render the page.
+  const [clientUser, setClientUser] = useState<User | null | undefined>(
+    undefined,
+  );
 
   useEffect(() => {
-    const refreshWhenSessionChanged = (browserSignedIn: boolean) => {
-      if (browserSignedIn !== serverSignedIn) {
+    const syncSession = (user: User | null) => {
+      setClientUser(user);
+      if (Boolean(user) !== serverSignedIn) {
         router.refresh();
       }
     };
@@ -23,12 +31,12 @@ export function useAuthButton(serverSignedIn: boolean) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      refreshWhenSessionChanged(Boolean(session?.user));
+      syncSession(session?.user ?? null);
     });
 
     const syncRestoredPage = () => {
       void supabase.auth.getSession().then(({ data }) => {
-        refreshWhenSessionChanged(Boolean(data.session?.user));
+        syncSession(data.session?.user ?? null);
       });
     };
 
@@ -55,23 +63,34 @@ export function useAuthButton(serverSignedIn: boolean) {
     return null;
   }
 
+  async function signInAsGuest() {
+    const { error } = await supabase.auth.signInAnonymously();
+    if (error) return error;
+    setOpen(false);
+    router.refresh();
+    return null;
+  }
+
   async function signOut() {
     setPendingAction("signout");
     const { error } = await supabase.auth.signOut();
+    setPendingAction(null);
     if (error) {
-      setPendingAction(null);
       return "Unable to end this session. Please try again.";
     }
-    window.location.reload();
+    setOpen(false);
+    router.refresh();
     return null;
   }
 
   return {
+    clientUser,
     open,
     pendingAction,
     setOpen,
     setTab,
     signIn,
+    signInAsGuest,
     signOut,
     tab,
   };

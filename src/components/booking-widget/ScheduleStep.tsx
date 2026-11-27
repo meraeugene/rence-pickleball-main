@@ -217,7 +217,7 @@ export function ScheduleStep({
             className="font-display text-[0.65rem] font-black uppercase tracking-[0.24em] text-zinc-500 lg:text-base lg:tracking-[0.14em] lg:text-white"
             id="court-time-heading"
           >
-            Court &amp; Time
+            {courts.length === 1 ? "1 PRO COURT" : "Court & Time"}
           </p>
           <div
             aria-label="Schedule status legend"
@@ -338,10 +338,10 @@ export function ScheduleStep({
         <div className="mt-2 overflow-hidden rounded-2xl border border-white/12 bg-zinc-950 shadow-[0_24px_70px_rgba(0,0,0,0.32)] lg:mt-5">
           <div className="border-b border-white/10 px-4 py-4 lg:hidden">
             <h4 className="font-display text-base font-black uppercase tracking-[0.12em] text-white">
-              All courts, one schedule
+              {courts.length === 1 ? "Pick your time" : "All courts, one schedule"}
             </h4>
             <p className="mt-1 text-xs leading-5 text-zinc-500 lg:leading-4">
-              Tap open times to book. Swipe for more courts.
+              {courts.length === 1 ? "Tap open times to book." : "Tap open times to book. Swipe for more courts."}
             </p>
           </div>
 

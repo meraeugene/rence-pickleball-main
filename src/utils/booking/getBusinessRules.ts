@@ -1,6 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { DEFAULT_PRICING_BANDS } from "@/lib/pricing";
-import { COURTS } from "@/data/app/appConfig";
+import { ACTIVE_COURT_IDS, COURTS } from "@/data/app/appConfig";
 import type { BusinessRules, CourtOption, PricingBand } from "@/types/bookingSettings";
 import { createAdminClient } from "@/utils/supabase/admin";
 
@@ -46,6 +46,10 @@ async function loadBusinessRules(): Promise<BusinessRules> {
       .order("name", { ascending: true }),
   ]);
 
+  const activeCourts = (courtsResult.data || []).filter((court) =>
+    ACTIVE_COURT_IDS.includes(court.id),
+  );
+
   return {
     settings: settingsResult.data
       ? {
@@ -57,9 +61,9 @@ async function loadBusinessRules(): Promise<BusinessRules> {
     pricingBands: pricingResult.data?.length
       ? pricingResult.data.map(mapPricingBand)
       : DEFAULT_PRICING_BANDS,
-    courts: courtsResult.data?.length
-      ? courtsResult.data.map(mapCourt)
-      : COURTS.map((court) => ({
+    courts: activeCourts.length
+      ? activeCourts.map(mapCourt)
+      : COURTS.filter((court) => ACTIVE_COURT_IDS.includes(court.id)).map((court) => ({
           id: court.id,
           name: court.name,
           description: "Indoor",

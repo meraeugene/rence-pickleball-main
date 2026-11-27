@@ -28,6 +28,7 @@ import {
 import Link from "next/link";
 import { AdminWorkspaceNav } from "./AdminWorkspaceNav";
 import type { AdminView } from "@/types/admin/adminWorkspace";
+import type { Announcement } from "@/types/announcement";
 import { useRouter } from "next/navigation";
 import { ADMIN_BOOKINGS_PAGE_SIZE } from "@/data/admin/adminPagination";
 import { formatPeso } from "@/lib/pricing";
@@ -56,6 +57,7 @@ import { resetBookingData } from "@/actions/admin/resetBookingData";
 import { ACCEPTED_BOOKINGS_KEY } from "@/hooks/useAcceptedBookings";
 import { USER_BOOKING_HISTORY_KEY } from "@/hooks/useUserBookingHistory";
 import { AdminBookingActions } from "./AdminBookingActions";
+import { AnnouncementsManager } from "./AnnouncementsManager";
 import { BookingBackupRestore } from "./BookingBackupRestore";
 import { BookingListImporter } from "./BookingListImporter";
 import { OnsiteBookingForm } from "./OnsiteBookingForm";
@@ -67,6 +69,7 @@ import { StatusBadge } from "./StatusBadge";
 
 type AdminBookingDashboardProps = {
   adminMutationLockError: string | null;
+  announcements: { items: Announcement[]; missingTable: boolean };
   bookingRows: AdminBooking[];
   courts: CourtOption[];
   currentPage: number;
@@ -96,6 +99,7 @@ const NEW_BOOKING_WINDOW_MS = 15 * 60 * 1000;
 
 export function AdminBookingDashboard({
   adminMutationLockError,
+  announcements,
   bookingRows,
   courts,
   currentPage,
@@ -355,7 +359,7 @@ export function AdminBookingDashboard({
           view={view}
           onSelect={(nextView) => {
             setView(nextView);
-            if (nextView === "expenses") router.refresh();
+            if (nextView === "expenses" || nextView === "announcements") router.refresh();
           }}
         />
         <div className="modern-admin-content">
@@ -504,6 +508,14 @@ export function AdminBookingDashboard({
           <ProfitDashboard
             data={profitDashboard}
             lockError={adminMutationLockError}
+          />
+        ) : null}
+
+        {view === "announcements" ? (
+          <AnnouncementsManager
+            items={announcements.items}
+            lockError={adminMutationLockError}
+            missingTable={announcements.missingTable}
           />
         ) : null}
 

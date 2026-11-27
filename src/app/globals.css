@@ -733,6 +733,11 @@ input:disabled {
   }
 }
 
+/* How long the splash stays up before fading out. */
+:root {
+  --splash-hold: 4000ms;
+}
+
 .splash-screen {
   position: fixed;
   inset: 0;
@@ -747,8 +752,8 @@ input:disabled {
 
 /* Lock both scroll containers before hydration and until the overlay unmounts.
    Booking dialogs can update body inline styles without releasing this lock. */
-html:has(.splash-screen),
-body:has(.splash-screen) {
+html:not(.splash-seen):has(.splash-screen),
+html:not(.splash-seen) body:has(.splash-screen) {
   overflow: hidden !important;
   overscroll-behavior: none;
   touch-action: none;
@@ -784,11 +789,52 @@ body:has(.splash-screen) {
 }
 
 .splash-screen-auto-exit {
-  animation: splash-out 360ms ease 1640ms both;
+  animation: splash-out 360ms ease var(--splash-hold) both;
 }
 
 .splash-screen-auto-exit .splash-content {
-  animation: splash-content-out 300ms ease 1640ms both;
+  animation: splash-content-out 300ms ease var(--splash-hold) both;
+}
+
+.splash-loading-line {
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+
+.splash-screen-auto-exit .splash-loading-line {
+  animation: splash-loading var(--splash-hold) cubic-bezier(0.45, 0, 0.2, 1) both;
+}
+
+/* Already shown in this tab: skip it (e.g. after login or a refresh). */
+.splash-seen .splash-screen {
+  visibility: hidden;
+  animation: none !important;
+}
+
+.splash-credit {
+  animation: splash-credit-in 600ms ease 500ms both;
+}
+
+@keyframes splash-credit-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.35rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes splash-loading {
+  from {
+    opacity: 0.72;
+    transform: scaleX(0);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
 }
 
 .splash-logo {
@@ -841,7 +887,8 @@ body:has(.splash-screen) {
   .splash-screen,
   .splash-screen::after,
   .splash-content,
-  .splash-logo {
+  .splash-logo,
+  .splash-loading-line {
     animation: none;
   }
 

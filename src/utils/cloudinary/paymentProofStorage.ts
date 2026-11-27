@@ -138,11 +138,11 @@ export async function listPaymentProofAssets() {
   return assets;
 }
 
-function normalizeFolder(folder: string) {
+export function normalizeFolder(folder: string) {
   return folder.trim().replace(/^\/+|\/+$/g, "");
 }
 
-function signCloudinaryParams(
+export function signCloudinaryParams(
   params: Record<string, string>,
   apiSecret: string,
 ) {

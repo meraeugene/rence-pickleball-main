@@ -6,6 +6,7 @@ import { createClient } from "@/utils/supabase/server";
 import { getAdminBookings } from "@/utils/admin/getAdminBookings";
 import { getAdminMutationLockError } from "@/utils/admin/getAdminMutationLockError";
 import { getBusinessRules } from "@/utils/booking/getBusinessRules";
+import { getAllAnnouncements } from "@/utils/announcements/getAnnouncements";
 import { AdminBookingDashboard } from "@/components/admin/AdminBookingDashboard";
 
 export const dynamic = "force-dynamic";
@@ -42,15 +43,18 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     { bookingRows, safePage, totalCount, totalPages, filters },
     businessRules,
     profitDashboard,
+    announcements,
   ] = await Promise.all([
     getAdminBookings(params),
     getBusinessRules(),
     getProfitDashboard(),
+    getAllAnnouncements(),
   ]);
 
   return (
     <AdminBookingDashboard
       adminMutationLockError={getAdminMutationLockError()}
+      announcements={announcements}
       bookingRows={bookingRows}
       courts={businessRules.courts}
       currentPage={safePage}

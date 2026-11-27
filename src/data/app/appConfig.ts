@@ -5,6 +5,10 @@ export const COURTS = [
   { id: "00000000-0000-0000-0000-000000000002", name: "Court 2" },
 ] as const;
 
+// Courts customers can book. UNO RALLY currently runs 1 pro court, so Court 2
+// stays in the database (old bookings reference it) but is hidden and blocked.
+export const ACTIVE_COURT_IDS: readonly string[] = [COURTS[0].id];
+
 export const BOOKING_STATUSES = [
   "PENDING_REVIEW",
   "ACCEPTED",

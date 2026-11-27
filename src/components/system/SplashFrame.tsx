@@ -3,6 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import type { Ref } from "react";
+import { DeveloperCredit } from "@/components/brand/DeveloperCredit";
 
 export function SplashFrame({
   autoExit = false,
@@ -28,26 +29,27 @@ export function SplashFrame({
         className,
       ].join(" ")}
     >
-      <div className="splash-content grid justify-items-center">
+      <div className="splash-content grid w-full max-w-5xl justify-items-center gap-7">
         <img
           alt="UNO RALLY"
-          className="splash-logo h-auto w-32 sm:w-40"
-          width={1635}
-          height={962}
-          src="/uno-rally-logo.png"
+          className="splash-logo h-auto w-40 sm:w-48"
+          width={1228}
+          height={773}
+          src="/uno-rally-logo-new.png"
         />
+        <div className="w-full max-w-[14rem]">
+          <div className="h-[3px] overflow-hidden rounded-full bg-white/12">
+            <div className="splash-loading-line h-full rounded-full bg-white" />
+          </div>
+          <p className="mt-4 whitespace-nowrap text-center font-display text-[0.56rem] font-black uppercase tracking-[0.2em] text-zinc-500 sm:text-[0.62rem]">
+            Cagayan de Oro Pickleball
+          </p>
+        </div>
       </div>
-      <p className="absolute bottom-[max(1.5rem,env(safe-area-inset-bottom))] left-0 w-full px-6 text-center text-xs font-medium text-zinc-600">
-        Developed by{" "}
-        <a
-          className="cursor-pointer text-zinc-400 no-underline transition hover:text-white"
-          href="https://andrewvillalon.online"
-          rel="noreferrer"
-          target="_blank"
-        >
-          Andrew Villalon
-        </a>
-      </p>
+      <DeveloperCredit
+        stacked
+        className="splash-credit absolute bottom-[max(1.75rem,env(safe-area-inset-bottom))] left-0 w-full px-6 text-center text-xs font-medium leading-5 text-zinc-500"
+      />
     </div>
   );
 }

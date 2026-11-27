@@ -72,6 +72,10 @@ export async function createOnsiteBooking(formData: FormData) {
   if (normalizedSchedules.some((schedule) => !schedule.courtId)) {
     return { ok: false, error: "Select a valid court for every schedule." };
   }
+  const bookableCourtIds = new Set(rules.courts.map((court) => court.id));
+  if (normalizedSchedules.some((schedule) => !bookableCourtIds.has(schedule.courtId!))) {
+    return { ok: false, error: "Select a valid court for every schedule." };
+  }
   if (normalizedSchedules.some((schedule) => schedule.endHour <= schedule.startHour)) {
     return { ok: false, error: "Every end time must be after its start time." };
   }
