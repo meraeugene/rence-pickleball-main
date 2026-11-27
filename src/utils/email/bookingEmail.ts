@@ -77,7 +77,7 @@ function shell(title: string, body: string) {
                 <h1 style="margin:0 0 18px;font-size:32px;line-height:1.16;color:#18181b">${title}</h1>
                 ${body}
                 <p style="margin:28px 0 0;color:#71717a;font-size:12px;line-height:1.6">This is an automated booking email from UNO RALLY.</p>
-                <p style="margin:8px 0 0;color:#71717a;font-size:12px;line-height:1.6">Developed by <a href="https://andrewvillalon.online" style="color:#18181b;font-weight:700;text-decoration:none">Andrew Villalon</a></p>
+                <p style="margin:8px 0 0;color:#71717a;font-size:12px;line-height:1.6">Developed by <a href="https://andrewvillalon.online" style="color:#18181b;font-weight:700;text-decoration:none">Dev_AV</a></p>
               </td>
             </tr>
           </table>
@@ -209,7 +209,7 @@ export async function sendAcceptanceEmail(booking: BookingEmail) {
       "A calendar invitation is attached.",
       "",
       getAppUrl(),
-      "Developed by Andrew Villalon - https://andrewvillalon.online",
+      "Developed by Dev_AV",
     ].join("\n"),
     html: shell(
       "Booking accepted",
@@ -260,7 +260,6 @@ export async function sendNewBookingAdminEmail(booking: NewBookingAdminEmail) {
       `Payment method: ${booking.paymentMethod}`,
       `Amount paid: ${formatPeso(booking.downpaymentAmount)}`,
       `Booking total: ${formatPeso(booking.totalAmount)}`,
-      `Booking group: ${booking.bookingGroupId}`,
       "",
       `Review booking: ${adminUrl}`,
     ].join("\n"),
@@ -277,7 +276,6 @@ export async function sendNewBookingAdminEmail(booking: NewBookingAdminEmail) {
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width:100%;margin:22px 0;border:1px solid #e4e4e7;border-radius:14px;overflow:hidden;border-collapse:separate;border-spacing:0">
           ${row("Payment method", escapeHtml(booking.paymentMethod))}
           ${row("Amount paid", formatPeso(booking.downpaymentAmount))}
-          ${row("Booking group", escapeHtml(booking.bookingGroupId))}
         </table>
         <a href="${escapeHtml(adminUrl)}" style="display:inline-block;margin-top:4px;border-radius:12px;background:#18181b;color:#ffffff;padding:14px 20px;text-decoration:none;font-weight:800">Review booking</a>
       `,
@@ -301,7 +299,6 @@ export async function sendBookingFeedbackEmail(
       `Rating: ${feedback.rating}/5 ${stars}`,
       `Customer: ${feedback.customerName}`,
       `Email: ${feedback.customerEmail || "Not provided"}`,
-      `Booking group: ${feedback.bookingGroupId}`,
       "",
       "Comment:",
       feedback.comment || "No comment provided.",
@@ -315,7 +312,6 @@ export async function sendBookingFeedbackEmail(
           ${row("Rating", `${feedback.rating}/5`)}
           ${row("Customer", escapeHtml(feedback.customerName))}
           ${row("Email", escapeHtml(feedback.customerEmail || "Not provided"))}
-          ${row("Booking group", escapeHtml(feedback.bookingGroupId))}
         </table>
         <div style="border-radius:14px;background:#f4f4f5;padding:18px;color:#3f3f46;font-size:15px;line-height:1.7;white-space:pre-wrap">${safeComment}</div>
       `,
