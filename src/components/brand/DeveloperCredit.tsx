@@ -1,7 +1,5 @@
 import { brandConfig } from "@/data/brand/brandConfig";
 
-export const DEVELOPER_URL = "https://andrewvillalon.online";
-
 export function DeveloperCredit({
   className = "",
   compact = false,
@@ -17,9 +15,7 @@ export function DeveloperCredit({
     return (
       <p className={className}>
         Developed by{" "}
-        <a className={linkClass} href={DEVELOPER_URL} rel="noreferrer" target="_blank">
-          DEV_AV
-        </a>
+        <span className="font-semibold text-zinc-300">DEV_AV</span>
       </p>
     );
   }
@@ -29,9 +25,7 @@ export function DeveloperCredit({
       <div className={className}>
         <p>
           Developed by{" "}
-          <a className={linkClass} href={DEVELOPER_URL} rel="noreferrer" target="_blank">
-            DEV_AV
-          </a>
+          <span className="font-semibold text-zinc-300">DEV_AV</span>
         </p>
         <p className="mt-1">Ready to build your Online Booking? 🚀</p>
         <p className="mt-1">
@@ -47,9 +41,7 @@ export function DeveloperCredit({
   return (
     <p className={className}>
       Developed by{" "}
-      <a className={linkClass} href={DEVELOPER_URL} rel="noreferrer" target="_blank">
-        DEV_AV
-      </a>{" "}
+      <span className="font-semibold text-zinc-300">DEV_AV</span>{" "}
       - Ready to build your Online Booking? 🚀{" "}
       <a className={`${linkClass} underline underline-offset-2`} href={brandConfig.socialUrl} rel="noreferrer" target="_blank">
         Contact our page
